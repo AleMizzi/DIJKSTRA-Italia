@@ -10,17 +10,19 @@
 using namespace std;
 
 //funzioni generali
-bool controllo_presenza_classe(string input);
 bool controllo_presenza_vettore(string input, vector<string> vect_citta);
 bool controllo_presenza_file(string input);
 bool risp_main();
 void dijkstra();
 
 //specifiche
-int prendi_n_nodi();
+int prendi_n_nodi(string r);
 vector<string> crea_vect_citta(int n_nodi);
+vector<string> crea_vect_nodi(int n_nodi);
 vector<vector<int>> costruisci_graph(int n_nodi, vector<string> vect_citta);
+vector<vector<int>> costruisci_graph_nodi(int n_nodi, vector<string> vect_nodi);
 int prendi_source(int n_nodi, vector<string> vect_citta);
+int prendi_source_nodi(int n_nodi, vector<string> vect_nodi);
 
 //algoritmo
 int controllo_dei_nodi_vicini(vector<int> distanze, vector<bool> sono_stati_visitati, int n_nodi);
@@ -32,44 +34,14 @@ void mostra_path(int vertice_corrente, vector<int> parent, vector<string>vect_ci
 class db_le_citta
 {
 public:
-	vector<vector<int>> distanze_citta ={//0   1   2   3   4   5   6   7   8   9   10  11  12
-		                                  {0  ,153,0  ,0  ,263,0  ,312,0  ,0  ,0  ,0  ,0  ,0  },          //bari
-									      {153,0  ,582,0  ,413,0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  },          //lecce
-									      {0  ,582,0  ,211,592,0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  },          //catania
-									      {0  ,0  ,211,0  ,716,0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  },          //palermo
-									      {263,413,592,716,0  ,227,247,0  ,0  ,0  ,0  ,0  ,0  },          //napoli
-									      {0  ,0  ,0  ,0  ,227,0  ,210,275,0  ,0  ,0  ,513,0  },          //roma
-									      {312,0  ,0  ,0  ,247,210,0  ,399,365,0  ,0  ,0  ,0  },          //pescara
-									      {0  ,0  ,0  ,0  ,0  ,275,399,0  ,105,0  ,0  ,253,0  },          //firenze
-									      {0  ,0  ,0  ,0  ,0  ,0  ,365,105,0  ,154,213,294,0  },          //bologna
-									      {0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ,154,0  ,278,0  ,0  },          //venezia
-									      {0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ,213,278,0  ,346,143},          //milano
-									      {0  ,0  ,0  ,0  ,0  ,513,0  ,253,294,0  ,346,0  ,169},          //genova
-										  {0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ,0  ,143,169,0  }           //torino
-										   
-	};
 
-	vector<string> nomi_citta = {"bari","lecce","catania","palermo","napoli","roma","pescara","firenze","bologna","venezia","milano","genova","torino"};
-
-	vector<vector<int>> costruzione_graph_classe(int n_nodi, vector<string> vect_citta)
-	{
-		vector<vector<int>> v1;
-		for (int i = 0; i < n_nodi; i++) // loop per n nodi che ho messo
-		{
-			for (int j = 0; j < nomi_citta.size(); j++) //loop per n citta che esistono
-			{
-				if (vect_citta[i] == nomi_citta[j])
-				{
-					v1.push_back(distanze_citta[j]);
-				}
-			}
-		}
-		return v1;
-	}
+	vector < vector<int> > distanze_citta = carica_distanze_dal_file();
+	vector<string> nomi_citta = carica_dal_file();
 
 	void aggiungi_citta() {
 		string nuova_citta;
 		fstream f;
+		fstream f2;
 		string s;
 		f.open("nomidellecitta", ios::app);
 		
@@ -80,80 +52,97 @@ public:
 			nuova_citta[u] = tolower(nuova_citta[u]);
 		}
 		
-		while (controllo_presenza_file(nuova_citta) == true) //c'è la città
+		while (controllo_presenza_file(nuova_citta) == true)
 		{
 			cout << "Citta fa gia parte del database!" << endl;
 			cin.clear();
 			cin.ignore(256, '\n');
 			cin >> nuova_citta;
 		}
-		nomi_citta.push_back(nuova_citta);
-		f << "\n";
-		f<<nuova_citta;
 
-		cout << "Inserisci le distanze della nuova citta per " << endl;
-		vector<int> distanze_nuova_citta;
-		int d = 0;
+		nomi_citta.push_back(nuova_citta);
+		f << nuova_citta << endl;
+		f.close();
+
+	}
+
+	void carica_distanze() {
+		fstream f;
+		string citta;
+		int distanza = 0;
+
+		cout << "Quale citta scegli?" << endl;
+		cin >> citta;
+
+		f.open(citta, ios::app);
+		cout << "Inserisci le distanze della citta di" << citta << " per " << endl;
 
 		for (int i = 0; i < nomi_citta.size(); i++)
 		{
-			f >> s;
-			cout << s;
-			cin >> d;
-			distanze_nuova_citta.push_back(d);
-		}
-		f.close();
-		cout << "Ecco il vettore con le distanze della nuova citta!"<<endl;
-		for (int a = 0; a < distanze_nuova_citta.size(); a++)
-		{
-			cout << distanze_nuova_citta[a] << " , ";
+			cout << i << ") " << nomi_citta[i] << ": ";
+			cin >> distanza;
+			f << distanza << endl;
 		}
 
 	}
 
 	void display_nomi() {
-		cout << "Ecco le citta disponibili" << endl;
+		cout << "Ecco le citta disponibili:" << endl;
 		ifstream f;
-		string nomi;
+		string nome;
 		int i = 0;
 		f.open("nomidellecitta", ios::in);
-		while (getline(f, nomi))
+		while (getline(f, nome))
 		{
-			cout << i<<") "<< nomi << endl;
-			i++;
-			istringstream iss(nomi);
-			if (!(iss >> nomi)) {
-				cerr << "Errore: " << nomi << "\n";
+			istringstream iss(nome);
+			if (!(iss >> nome)) {
+				cerr << "Errore casella: " << i << "\n";
 				continue;
 			}
+			cout << i<<") "<< nome << endl;
+			i++;
 		}
 		f.close();
 	}
 
 	void display_database() {
-		cout << "Ecco le distanze presenti nel database" << endl;
-		for (int i = 0; i < distanze_citta.size(); i++)
+		cout << "Ecco le distanze presenti nel database:" << endl;
+		ifstream f, f2;
+		string nome_citta;
+		int distanze = 0;
+		f.open("nomidellecitta", ios::in);
+		while (getline(f, nome_citta))
 		{
-			cout << "Citta di "<< nomi_citta[i] << ":   \t";
-			for (int j = 0; j < distanze_citta[i].size(); j++)
+			istringstream iss(nome_citta);
+			if (!(iss >> nome_citta)) {
+				cerr << "Errore casella: " << nome_citta << "\n";
+				continue;
+			}
+
+			f2.open(nome_citta, ios::in);
+			cout << nome_citta << ":  \t\t";
+			while (f2 >> distanze)
 			{
-				cout << distanze_citta[i][j] << " ";
-			}cout << endl;
+				cout << distanze << " ";
+			}
+			cout << endl;
+			f2.close();
 		}
+		f.close();
 	}
 
 	int prendi_source_classe(int n_nodi) {
 		string rad;
 		vector<string>::iterator a;
 
-		cout << "Inserisci il nome della citta da cui vuoi partire: ";
+		cout << "Inserisci il nome del nodo (o dalla citta) da cui vuoi partire: ";
 		cin >> rad;
 		for (int u = 0; u < rad.size(); u++)
 		{
 			rad[u] = tolower(rad[u]);
 		}
 
-		while (controllo_presenza_classe(rad) == false) //non c'è la città
+		while (controllo_presenza_file(rad) == false) 
 		{
 			cout << "Citta non fa parte delle citta nel database!" << endl;
 			cin.clear();
@@ -161,48 +150,178 @@ public:
 			cin >> rad;
 		}
 
-		a = find(nomi_citta.begin(), nomi_citta.end(), rad);
-		if (a != nomi_citta.end())
+		ifstream f;
+		string nomi;
+		int t = 0;
+		f.open("nomidellecitta", ios::in);
+		while (getline(f, nomi))
 		{
-			return (a - nomi_citta.begin());
+			istringstream iss(nomi); //string stream
+
+			if (!(iss >> nomi)) {
+				break;
+			}
+			if (rad == nomi)
+			{
+				return t;
+			}
+			t++;
 		}
+		f.close();
 
 	}
 
 	void dijkstrasudb() {
 		int source = prendi_source_classe(nomi_citta.size());
-		algoritmo(distanze_citta, source, nomi_citta.size(), nomi_citta);
+
+		vector < vector<int> > graph;
+		vector<string> vect_citta_aggiornato = { };
+		ifstream file, file2;
+		string nome;
+		int distanze = 0;
+		
+
+		file.open("nomidellecitta", ios::in);
+
+		while (getline(file, nome))
+		{
+			vector<int> vet_temp = { };
+			file2.open(nome, ios::in);
+			if (file2)
+			{
+				while (file2 >> distanze)
+				{
+					vet_temp.push_back(distanze);
+					file2.ignore(numeric_limits<streamsize>::max(), '\n');
+				}
+				vect_citta_aggiornato.push_back(nome);
+			    graph.push_back(vet_temp);
+			}
+			else {
+				continue;
+			}
+			file2.close();
+		}
+		file.close();
+		algoritmo(graph, source, graph.size(), vect_citta_aggiornato);
 	}
+
+	void vedi_vettore() {
+		for (int i = 0; i < nomi_citta.size(); i++)
+		{
+			cout << nomi_citta[i] << endl;
+		}
+	}
+
+	void vedi_distanze_citta() {
+		ifstream f;
+		string nome_citta;
+		int distanza = 0;
+
+		cout << "Che citta scegli? " << endl;
+		cin >> nome_citta;
+		f.open(nome_citta, ios::in);
+		vector<int> v;
+
+		while (f >> distanza) {
+			v.push_back(distanza);
+			f.ignore(numeric_limits<streamsize>::max(), '\n');
+		}
+
+		for (int i = 0; i < v.size(); i++)
+		{
+			cout << i <<")" << nomi_citta[i] << ": " << v[i] << endl;
+		}
+		f.close();
+	}
+
+	vector<vector<int>> carica_distanze_dal_file() {
+		fstream file_nomi;
+		fstream f2;
+		string nome;
+		vector<int> vet;
+		int distanze = 0;
+		vector<vector<int>> vettorefinale;
+		file_nomi.open("nomidellecitta", ios::in);
+
+		while (getline(file_nomi, nome))
+		{
+			f2.open(nome, ios::in);
+			if (f2)
+			{
+				while (f2 >> distanze)
+				{
+					vet.push_back(distanze);
+					f2.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				}
+				f2.close();
+				vettorefinale.push_back(vet);
+			}
+			vet.clear();
+		}
+		file_nomi.close();
+		return vettorefinale;
+	}
+
+	vector<string> carica_dal_file() {
+		ifstream file;
+		string nomi;
+		vector<string> vettore;
+		file.open("nomidellecitta", ios::in);
+		while (getline(file, nomi))
+		{
+			vettore.push_back(nomi);
+		}
+		return vettore;
+	}
+
+
 };
+
 
 int main()
 {
+
 	while(1){
+		cout << endl;
 		db_le_citta db;
 		int x;
 		cout << "Ciao! Cosa vuoi fare?" << endl;
-		cout << "1. Aggiungere una nuova citta" << endl;
-		cout << "2. Vedere le citta disponibili" << endl;
-		cout << "3. Vedere il database" << endl;
-		cout << "4. Usare Dijkstra" << endl;
-		cout << "5. Dijkstra su tutto il database" << endl;
+		cout << "1. Usare Dijkstra" << endl;
+		cout << "2. Dijkstra su tutto il database" << endl;
+		cout << "3. Aggiungere una nuova citta" << endl;
+		cout << "4. Carica le distanze di una citta" << endl;
+		cout << "5. Vedere le citta disponibili" << endl;
+		cout << "6. Vedere il database" << endl;
+		cout << "7. Vedere vettore distanze di una citta" << endl;
+		cout << "La tua scelta: ";
+
 		cin >> x;
 		switch (x)
 		{
 		case 1:
-			db.aggiungi_citta();
-			break;
-		case 2:
-			db.display_nomi();
-			break;
-		case 3:
-			db.display_database();
-			break;
-		case 4:
 			dijkstra();
 			break;
-		case 5:
+		case 2:
 			db.dijkstrasudb();
+			break;
+		case 3:
+			db.aggiungi_citta();
+			break;
+		case 4:
+			db.carica_distanze();
+			break;
+		case 5:
+			db.display_nomi();
+			break;
+		case 6:
+			db.display_database();
+			break;
+		case 7:
+			db.vedi_vettore();
+			break;
+		case 8:
+			db.vedi_distanze_citta();
 			break;
 		default:
 			break;
@@ -213,9 +332,9 @@ int main()
 	return 0;
 }
 
-int prendi_n_nodi() {
+int prendi_n_nodi(string r) {
 	int n_nodi;
-	cout << "Inserisci il numero di nodi: ";
+	cout << "Inserisci il numero di "<<r<<": ";
 	cin >> n_nodi;
 	while (cin.fail())
 	{
@@ -228,30 +347,45 @@ int prendi_n_nodi() {
 	
 }
 
+
 vector<string> crea_vect_citta(int n_nodi) {
 	string citta;
 	vector<string> vet;
 	db_le_citta db;
 
-	cout << "Inserisci i nomi delle citta / i nodi: ";
 	for (int o = 0; o < n_nodi; o++)
 	{
-		do
+	    cout << "Inserisci la citta "<< o <<": ";
+		cin >> citta;
+		while (controllo_presenza_file(citta) == false)
 		{
+			cout << "Citta non fa parte delle citta nel database!" << endl;
+			cin.clear();
+			cin.ignore(256, '\n');
 			cin >> citta;
-			for (int u = 0; u < citta.size(); u++)
-			{
-				citta[u] = tolower(citta[u]);
-			}
-			if (controllo_presenza_classe(citta) == false)
-			{
-				cout << "Citta non dichiarata!" << endl;
-			}
-			
-		} while (controllo_presenza_classe(citta) == false);
+		}
 		vet.push_back(citta);
 	}
-	
+	cout << endl;
+	return vet;
+}
+
+vector<string> crea_vect_nodi(int n_nodi) {
+	string nodi;
+	vector<string> vet;
+
+	cout << "Inserisci i nodi: ";
+	for (int o = 0; o < n_nodi; o++)
+	{
+		cin >> nodi;
+		for (int u = 0; u < nodi.size(); u++)
+		{
+			nodi[u] = tolower(nodi[u]);
+		}
+		
+		vet.push_back(nodi);
+	}
+
 	return vet;
 }
 
@@ -264,8 +398,8 @@ vector<vector<int>> costruisci_graph(int n_nodi, vector<string> vect_citta) {
 	if (risp == 1)
 	{
 		vector<vector<int>> graph;
-		cout << "Costruiamo il graph con le citta e le loro distanze." << endl;
 		int x;
+
 		for (int i = 0; i < n_nodi; i++)
 		{
 			vector<int> v1;
@@ -279,9 +413,50 @@ vector<vector<int>> costruisci_graph(int n_nodi, vector<string> vect_citta) {
 		return graph;
 	}
 	else {
+
+		vector < vector<int> > graph;
+		vector<int> vet_t2;
 		db_le_citta db;
-		return db.costruzione_graph_classe(n_nodi, vect_citta);
+		int a = 0;
+		vector<string>::iterator f;
+
+		for (int i = 0; i < vect_citta.size(); i++)
+		{
+			f = find(db.nomi_citta.begin(), db.nomi_citta.end(), vect_citta[i]);
+			if (f != db.nomi_citta.end())
+			{
+				a = (f - db.nomi_citta.begin());
+			}
+
+			for (int k = 0; k < db.distanze_citta[a].size() - (db.nomi_citta.size() - vect_citta.size() - 1); k++)
+			{
+				vet_t2.push_back(db.distanze_citta[a][k]);
+			}
+			graph.push_back(vet_t2);
+
+			int a = 0;
+			vet_t2.clear();
+		}
+		return graph;
 	}
+}
+
+vector<vector<int>> costruisci_graph_nodi(int n_nodi, vector<string> vect_nodi) {
+
+	vector<vector<int>> graph;
+	cout << "Costruiamo il graph con i nodi e le loro distanze." << endl;
+	int x;
+	for (int i = 0; i < n_nodi; i++)
+	{
+		vector<int> v1;
+		for (int j = 0; j < n_nodi; j++) {
+			cout << "Distanza da " << vect_nodi[i] << " a " << vect_nodi[j] << ": ";
+			cin >> x;
+			v1.push_back(x);
+		}
+		graph.push_back(v1);
+	}
+	return graph;
 }
 
 int prendi_source(int n_nodi, vector<string> vect_citta) {
@@ -295,9 +470,16 @@ int prendi_source(int n_nodi, vector<string> vect_citta) {
 		rad[u] = tolower(rad[u]);
 	}
 
-	while (controllo_presenza_classe(rad) == false || controllo_presenza_vettore(rad, vect_citta) == false) //non c'è la città
+	while (controllo_presenza_file(rad) == false ) //non c'è la città
 	{
-		cout << "Citta non fa parte delle città nel database o è estranea alle citta che hai selezionato!" << endl;
+		cout << "Citta non fa parte delle città nel database!" << endl;
+		cin.clear();
+		cin.ignore(256, '\n');
+		cin >> rad;
+	}
+	while (controllo_presenza_vettore(rad , vect_citta) == false) //non c'è la città
+	{
+		cout << "Citta non fa parte delle città che hai selezionato!" << endl;
 		cin.clear();
 		cin.ignore(256, '\n');
 		cin >> rad;
@@ -311,27 +493,28 @@ int prendi_source(int n_nodi, vector<string> vect_citta) {
 	
 }
 
-bool controllo_presenza_classe(string input) {
-	db_le_citta db;
-	for (int i = 0; i < db.nomi_citta.size(); i++)
-	{
-		if (input == db.nomi_citta[i])
-		{
-			return true;
-		}
-	}
-	return false;
-}
+int prendi_source_nodi(int n_nodi, vector<string> vect_nodi) {
+	string rad;
+	vector<string>::iterator f;
 
-bool controllo_presenza_vettore(string input, vector<string> vect_citta) {
-	for (int i = 0; i <vect_citta.size(); i++)
+	cout << "Inserisci il nome del nodo da cui vuoi partire: ";
+	cin >> rad;
+	for (int u = 0; u < rad.size(); u++)
 	{
-		if (input == vect_citta[i])
-		{
-			return true;
-		}
+		rad[u] = tolower(rad[u]);
 	}
-	return false;
+	while (controllo_presenza_vettore(rad, vect_nodi) == false) //non c'è la città
+	{
+		cout << "Citta non fa parte del vettore nodi!" << endl;
+		cin.clear();
+		cin.ignore(256, '\n');
+		cin >> rad;
+	}
+	f = find(vect_nodi.begin(), vect_nodi.end(), rad);
+	if (f != vect_nodi.end())
+	{
+		return (f - vect_nodi.begin());
+	}
 }
 
 int controllo_dei_nodi_vicini(vector<int> distanze, vector<bool> sono_stati_visitati, int n_nodi) {
@@ -393,6 +576,7 @@ void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string>
 			mostra_path(i, parent, vect_citta);
 		}
 	}
+	cout << endl;
 } 
 
 void mostra_path(int vertice_corrente, vector<int> parent, vector<string>vect_citta) {
@@ -424,11 +608,33 @@ bool risp_main() {
 }
 
 void dijkstra() {
-	int n_nodi = prendi_n_nodi();
-	vector<string> vect_citta = crea_vect_citta(n_nodi);
-	vector<vector<int>> graph = costruisci_graph(n_nodi, vect_citta);
-	int source = prendi_source(n_nodi, vect_citta);
-	algoritmo(graph, source, n_nodi, vect_citta);
+	string r = " ";
+	cout << "Vuoi applicare l'algoritmo a delle citta (""citta"") oppure a nodi personali(""nodi"")?" << endl;
+	cin >> r;
+	while (r != "citta" && r != "nodi") //non c'è la città
+	{
+		cout << "Non ho capito." << endl;
+		cin.clear();
+		cin.ignore(256, '\n');
+		cin >> r;
+	}
+
+	if (r == "citta") {
+		int n_nodi = prendi_n_nodi(r);
+		vector<string> vect_citta = crea_vect_citta(n_nodi);
+		vector<vector<int>> graph = costruisci_graph(n_nodi, vect_citta);
+		int source = prendi_source(n_nodi, vect_citta);
+		algoritmo(graph, source, n_nodi, vect_citta);
+	}
+	else if (r == "nodi") {
+		int n_nodi = prendi_n_nodi(r);
+		vector<string> vect_nodi = crea_vect_nodi(n_nodi);
+		vector<vector<int>> graph = costruisci_graph_nodi(n_nodi, vect_nodi);
+		int source = prendi_source_nodi(n_nodi, vect_nodi);
+		algoritmo(graph, source, n_nodi, vect_nodi);
+	}
+	
+	
 }
 
 bool controllo_presenza_file(string input) {
@@ -437,10 +643,10 @@ bool controllo_presenza_file(string input) {
 	f.open("nomidellecitta", ios::in);
 	while (getline(f, nomi))
 	{
-		istringstream iss(nomi);
+		istringstream iss(nomi); //string stream
+
 		if (!(iss >> nomi)) {
-			std::cerr << "Errore: " << nomi << "\n";
-			continue;
+			break; 
 		}
 		if (input == nomi)
 		{
@@ -452,3 +658,13 @@ bool controllo_presenza_file(string input) {
 	f.close();
 }
 
+bool controllo_presenza_vettore(string input, vector<string> vect_citta) {
+	for (int i = 0; i < vect_citta.size(); i++)
+	{
+		if (input == vect_citta[i])
+		{
+			return true;
+		}
+	}
+	return false;
+}
