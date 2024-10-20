@@ -466,16 +466,16 @@ int prendi_source(int n_nodi, vector<string> vect_citta) {
 		rad[u] = tolower(rad[u]);
 	}
 
-	while (controllo_presenza_file(rad) == false ) //non c'è la città
+	while (controllo_presenza_file(rad) == false ) //non c'ï¿½ la cittï¿½
 	{
-		cout << "Citta non fa parte delle città nel database!" << endl;
+		cout << "Citta non fa parte delle cittï¿½ nel database!" << endl;
 		cin.clear();
 		cin.ignore(256, '\n');
 		cin >> rad;
 	}
-	while (controllo_presenza_vettore(rad , vect_citta) == false) //non c'è la città
+	while (controllo_presenza_vettore(rad , vect_citta) == false) //non c'ï¿½ la cittï¿½
 	{
-		cout << "Citta non fa parte delle città che hai selezionato!" << endl;
+		cout << "Citta non fa parte delle cittï¿½ che hai selezionato!" << endl;
 		cin.clear();
 		cin.ignore(256, '\n');
 		cin >> rad;
@@ -499,7 +499,7 @@ int prendi_source_nodi(int n_nodi, vector<string> vect_nodi) {
 	{
 		rad[u] = tolower(rad[u]);
 	}
-	while (controllo_presenza_vettore(rad, vect_nodi) == false) //non c'è la città
+	while (controllo_presenza_vettore(rad, vect_nodi) == false) //non c'ï¿½ la cittï¿½
 	{
 		cout << "Citta non fa parte del vettore nodi!" << endl;
 		cin.clear();
@@ -520,7 +520,7 @@ int controllo_dei_nodi_vicini(vector<int> distanze, vector<bool> sono_stati_visi
 	{
 		if (!sono_stati_visitati[i] && distanze[i] <= valoremin)
 			//viene preso e aggiunto il nodo con la 
-			//minima distanza che non è nel vect bool dei visitati
+			//minima distanza che non ï¿½ nel vect bool dei visitati
 		{
 			valoremin = distanze[i];
 			nodominimo = i;
@@ -546,16 +546,16 @@ void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string>
 	for (int i = 0; i < n_nodi - 1; i++)
 	{
 		int nodo_vicino = controllo_dei_nodi_vicini(distanze, sono_stati_visitati, n_nodi);
-		//nodi vicini vengono analizzati, int nodo vicino è il nodo preso in considerazione
+		//nodi vicini vengono analizzati, int nodo vicino ï¿½ il nodo preso in considerazione
 
-		sono_stati_visitati[nodo_vicino] = true; //è stato visitato il nodo vicino
+		sono_stati_visitati[nodo_vicino] = true; //ï¿½ stato visitato il nodo vicino
 
 		for (int adiacente = 0; adiacente < n_nodi; adiacente++) //fase di update delle distanze dei n_nodi adiacenti
 		{
-			if (!sono_stati_visitati[adiacente]            //se non è nell'array dei visitati "sono_stati_visitati"
+			if (!sono_stati_visitati[adiacente]            //se non ï¿½ nell'array dei visitati "sono_stati_visitati"
 				&& graph[nodo_vicino][adiacente]           //esiste la connessione tra il vicino e l'adiacente
-				&& distanze[nodo_vicino] != INT_MAX        //distanza del nodo vicino non è infinita
-				&& distanze[nodo_vicino] + graph[nodo_vicino][adiacente] <= distanze[adiacente]) //il peso del viaggio dalla source al nodo adiacente è piccolo rispetto alla distanza corrente dell'adiacente
+				&& distanze[nodo_vicino] != INT_MAX        //distanza del nodo vicino non ï¿½ infinita
+				&& distanze[nodo_vicino] + graph[nodo_vicino][adiacente] <= distanze[adiacente]) //il peso del viaggio dalla source al nodo adiacente ï¿½ piccolo rispetto alla distanza corrente dell'adiacente
 			{
 				parent[adiacente] = nodo_vicino; //parent serve per printare il path
 				distanze[adiacente] = distanze[nodo_vicino] + graph[nodo_vicino][adiacente];
@@ -651,7 +651,7 @@ void dijkstra() {
 	string r = " ";
 	cout << "Vuoi applicare l'algoritmo a delle citta (""citta"") oppure a nodi personali(""nodi"")?" << endl;
 	cin >> r;
-	while (r != "citta" && r != "nodi") //non c'è la città
+	while (r != "citta" && r != "nodi") //non c'ï¿½ la cittï¿½
 	{
 		cout << "Non ho capito." << endl;
 		cin.clear();
@@ -723,7 +723,7 @@ void dijkstra() {
 			}
 			file.close();
 			//dovrebbe fare l'algoritmo
-			algoritmo(graph, source, graph.size(), vect_citta_aggiornato,true, vect_citta); // true è il flag per i print differenziale, vect citta è l'originale per il confronto
+			algoritmo(graph, source, graph.size(), vect_citta_aggiornato,true, vect_citta); // true ï¿½ il flag per i print differenziale, vect citta ï¿½ l'originale per il confronto
 		}
 
 	}
