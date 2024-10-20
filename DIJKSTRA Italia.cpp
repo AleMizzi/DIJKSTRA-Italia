@@ -19,15 +19,15 @@ void dijkstra();
 int prendi_n_nodi(string r);
 vector<string> crea_vect_citta(int n_nodi);
 vector<string> crea_vect_nodi(int n_nodi);
-vector<vector<int>> costruisci_graph(int n_nodi, vector<string> vect_citta);
 vector<vector<int>> costruisci_graph_nodi(int n_nodi, vector<string> vect_nodi);
 int prendi_source(int n_nodi, vector<string> vect_citta);
 int prendi_source_nodi(int n_nodi, vector<string> vect_nodi);
 
 //algoritmo
 int controllo_dei_nodi_vicini(vector<int> distanze, vector<bool> sono_stati_visitati, int n_nodi);
-void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string> vect_citta);
+void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string> vect_citta, bool a, vector<string> vet_di_confronto);
 void mostra_path(int vertice_corrente, vector<int> parent, vector<string>vect_citta);
+void print(int radice, int n_nodi, vector<string> vect_citta, bool a, vector<int> parent, vector<int> distanze, vector<string> vet_di_confronto);
 
 
 
@@ -64,6 +64,61 @@ public:
 		f << nuova_citta << endl;
 		f.close();
 
+	}
+
+	void elimina_citta() {
+
+		
+		int n = 0;
+		vector<string> v;
+
+		cout << "Quante citta vuoi eliminare: ";
+		cin >> n;
+
+		while (n == 0)
+		{
+			cout << "Inserisci un numero diverso da 0!" << endl;
+			cin.clear();
+			cin.ignore(256, '\n');
+			cin >> n;
+		}
+		cout << "Digita i nomi delle citta che vuoi eliminare: " << endl;
+		display_database();
+		string citta;
+
+		for (int i = 0; i < n; i++)
+		{
+			cin >> citta;
+			for (int u = 0; u < citta.size(); u++)
+			{
+				citta[u] = tolower(citta[u]);
+			}
+			v.push_back(citta);
+		}
+
+		fstream f;
+		string s;
+		vector <string> q;
+		f.open("nomidellecitta", ios::in);
+
+		for (int x = 0; x < v.size(); x++)
+		{
+			while (getline(f, s))
+			{
+				istringstream iss(s); //string stream
+				if (!(iss >> s)) {
+					break;
+				}
+
+				if (s != v[x])
+				{
+					q.push_back(s);
+				}
+
+			}
+		}
+		f.close();
+		
 	}
 
 	void carica_distanze() {
@@ -120,7 +175,7 @@ public:
 			}
 
 			f2.open(nome_citta, ios::in);
-			cout << nome_citta << ":  \t\t";
+			cout << nome_citta << ":    \t\t";
 			while (f2 >> distanze)
 			{
 				cout << distanze << " ";
@@ -173,7 +228,7 @@ public:
 
 	void dijkstrasudb() {
 		int source = prendi_source_classe(nomi_citta.size());
-
+		vector<string> vet_di_controllo;
 		vector < vector<int> > graph;
 		vector<string> vect_citta_aggiornato = { };
 		ifstream file, file2;
@@ -203,14 +258,7 @@ public:
 			file2.close();
 		}
 		file.close();
-		algoritmo(graph, source, graph.size(), vect_citta_aggiornato);
-	}
-
-	void vedi_vettore() {
-		for (int i = 0; i < nomi_citta.size(); i++)
-		{
-			cout << nomi_citta[i] << endl;
-		}
+		algoritmo(graph, source, graph.size(), vect_citta_aggiornato, false ,vet_di_controllo);
 	}
 
 	void vedi_distanze_citta() {
@@ -289,11 +337,12 @@ int main()
 		cout << "Ciao! Cosa vuoi fare?" << endl;
 		cout << "1. Usare Dijkstra" << endl;
 		cout << "2. Dijkstra su tutto il database" << endl;
-		cout << "3. Aggiungere una nuova citta" << endl;
-		cout << "4. Carica le distanze di una citta" << endl;
-		cout << "5. Vedere le citta disponibili" << endl;
-		cout << "6. Vedere il database" << endl;
-		cout << "7. Vedere vettore distanze di una citta" << endl;
+		cout << "3. Aggiungere citta" << endl;
+		cout << "4. Eliminare citta" << endl;
+		cout << "5. Carica le distanze di una citta" << endl;
+		cout << "6. Vedere le citta disponibili" << endl;
+		cout << "7. Vedere il database" << endl;
+		cout << "8. Vedere vettore distanze di una citta" << endl;
 		cout << "La tua scelta: ";
 
 		cin >> x;
@@ -309,16 +358,16 @@ int main()
 			db.aggiungi_citta();
 			break;
 		case 4:
-			db.carica_distanze();
+			db.elimina_citta();
 			break;
 		case 5:
-			db.display_nomi();
+			db.carica_distanze();
 			break;
 		case 6:
-			db.display_database();
+			db.display_nomi();
 			break;
 		case 7:
-			db.vedi_vettore();
+			db.display_database();
 			break;
 		case 8:
 			db.vedi_distanze_citta();
@@ -346,7 +395,6 @@ int prendi_n_nodi(string r) {
 	return n_nodi;
 	
 }
-
 
 vector<string> crea_vect_citta(int n_nodi) {
 	string citta;
@@ -387,58 +435,6 @@ vector<string> crea_vect_nodi(int n_nodi) {
 	}
 
 	return vet;
-}
-
-vector<vector<int>> costruisci_graph(int n_nodi, vector<string> vect_citta) {
-	
-	int risp;
-	cout << "Vuoi costruire con distanze a tuo piacimento (seleziona 1) oppure gia determinate (seleziona 0) ?" << endl;
-	cin >> risp;
-	
-	if (risp == 1)
-	{
-		vector<vector<int>> graph;
-		int x;
-
-		for (int i = 0; i < n_nodi; i++)
-		{
-			vector<int> v1;
-			for (int j = 0; j < n_nodi; j++) {
-				cout << "Distanza da " << vect_citta[i] << " a " << vect_citta[j] << ": ";
-				cin >> x;
-				v1.push_back(x);
-			}
-			graph.push_back(v1);
-		}
-		return graph;
-	}
-	else {
-
-		vector < vector<int> > graph;
-		vector<int> vet_t2;
-		db_le_citta db;
-		int a = 0;
-		vector<string>::iterator f;
-
-		for (int i = 0; i < vect_citta.size(); i++)
-		{
-			f = find(db.nomi_citta.begin(), db.nomi_citta.end(), vect_citta[i]);
-			if (f != db.nomi_citta.end())
-			{
-				a = (f - db.nomi_citta.begin());
-			}
-
-			for (int k = 0; k < db.distanze_citta[a].size() - (db.nomi_citta.size() - vect_citta.size() - 1); k++)
-			{
-				vet_t2.push_back(db.distanze_citta[a][k]);
-			}
-			graph.push_back(vet_t2);
-
-			int a = 0;
-			vet_t2.clear();
-		}
-		return graph;
-	}
 }
 
 vector<vector<int>> costruisci_graph_nodi(int n_nodi, vector<string> vect_nodi) {
@@ -533,7 +529,7 @@ int controllo_dei_nodi_vicini(vector<int> distanze, vector<bool> sono_stati_visi
 	return nodominimo; //viene dato all'algoritmo
 }
 
-void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string> vect_citta) {
+void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string> vect_citta, bool a, vector<string> vet_di_confronto) {
 
 	vector<int> distanze(n_nodi), parent(n_nodi);
 	vector<bool> sono_stati_visitati(n_nodi); //flags per i visitati
@@ -567,17 +563,61 @@ void algoritmo(vector<vector<int>> graph, int radice, int n_nodi, vector<string>
 		}
 	}
 
-	//mostriamo
-	for (int i = 0; i < n_nodi; i++) {
-		if (i != radice)
-		{
-			cout << endl;
-			cout << "Nodo: " << vect_citta[radice] << " -> " << vect_citta[i] << "\t\tDistanza: " << distanze[i] << "\t\tPercorso: ";
-			mostra_path(i, parent, vect_citta);
-		}
-	}
-	cout << endl;
+	print(radice,n_nodi,vect_citta,a,parent,distanze, vet_di_confronto);
 } 
+
+void print(int radice, int n_nodi, vector<string> vect_citta, bool a, vector<int> parent, vector<int> distanze, vector<string> vet_di_confronto) {
+	
+		if (a)
+		{
+			vector<string> v;
+			vector<int> d;
+			vector<int> p;
+
+			for (int i = 0; i < n_nodi; i++) 
+			{
+				if (i != radice)
+				{
+					for (int f = 0; f < vet_di_confronto.size() ; f++)
+					{
+						for (int k = 0; k < vect_citta.size() ; k++)
+						{
+							if (vet_di_confronto[f] == vect_citta[k] && controllo_presenza_vettore(vet_di_confronto[f], v) == false) {
+								v.push_back(vet_di_confronto[f]);
+								d.push_back(distanze[k]);
+								p.push_back(parent[k]);
+							}
+						}
+					}
+				}
+			}
+			n_nodi = v.size();
+			
+			for (int i = 0; i < n_nodi; i++)
+			{
+				if (i != radice)
+				{
+					cout << "Nodo: " << vect_citta[radice] << " -> " << v[i] << "\t\tDistanza: " << d[i] << "\t\tPercorso: ";
+					mostra_path(i, parent, vect_citta);
+					cout << endl;
+				}
+			}
+
+		}
+		else {
+			for (int i = 0; i < n_nodi; i++) {
+				if (i != radice)
+				{
+					cout << endl;
+					cout << "Nodo: " << vect_citta[radice] << " -> " << vect_citta[i] << "\t\tDistanza: " << distanze[i] << "\t\tPercorso: ";
+					mostra_path(i, parent, vect_citta);
+				}
+			}
+
+		}
+	
+	cout << endl;
+}
 
 void mostra_path(int vertice_corrente, vector<int> parent, vector<string>vect_citta) {
 	if (vertice_corrente == NON_HA_PARENT) {
@@ -620,18 +660,80 @@ void dijkstra() {
 	}
 
 	if (r == "citta") {
+		bool a = true;
+		vector<string> vet_di_confronto;
+		vector<vector<int>> graph;
 		int n_nodi = prendi_n_nodi(r);
 		vector<string> vect_citta = crea_vect_citta(n_nodi);
-		vector<vector<int>> graph = costruisci_graph(n_nodi, vect_citta);
-		int source = prendi_source(n_nodi, vect_citta);
-		algoritmo(graph, source, n_nodi, vect_citta);
+
+		int risp;
+		cout << "Vuoi costruire il graph con distanze a tuo piacimento (seleziona 1) oppure in modo automatico (seleziona 0) ?" << endl;
+		cin >> risp;
+
+		if (risp == 1)
+		{
+			vector<vector<int>> graph;
+			int x;
+
+			for (int i = 0; i < n_nodi; i++)
+			{
+				vector<int> v1;
+				for (int j = 0; j < n_nodi; j++) {
+					cout << "Distanza da " << vect_citta[i] << " a " << vect_citta[j] << ": ";
+					cin >> x;
+					v1.push_back(x);
+				}
+				graph.push_back(v1);
+			}
+			int source = prendi_source_nodi(n_nodi, vect_citta);
+			algoritmo(graph, source, n_nodi, vect_citta, false, vet_di_confronto);
+		}
+		else {
+			db_le_citta db;
+			int source = db.prendi_source_classe(db.nomi_citta.size());
+
+			vector < vector<int> > graph;
+			vector<string> vect_citta_aggiornato = { };
+			ifstream file, file2;
+			string nome;
+			int distanze = 0;
+
+
+			file.open("nomidellecitta", ios::in);
+
+			while (getline(file, nome))
+			{
+				vector<int> vet_temp;
+				file2.open(nome, ios::in);
+				if (file2)
+				{
+					while (file2 >> distanze)
+					{
+						vet_temp.push_back(distanze);
+						file2.ignore(numeric_limits<streamsize>::max(), '\n');
+					}
+					vect_citta_aggiornato.push_back(nome);
+					graph.push_back(vet_temp);
+					vet_temp.clear();
+				}
+				else {
+					continue;
+				}
+				file2.close();
+			}
+			file.close();
+			//dovrebbe fare l'algoritmo
+			algoritmo(graph, source, graph.size(), vect_citta_aggiornato,true, vect_citta); // true è il flag per i print differenziale, vect citta è l'originale per il confronto
+		}
+
 	}
 	else if (r == "nodi") {
+		vector<string> vet_di_controllo = { };
 		int n_nodi = prendi_n_nodi(r);
 		vector<string> vect_nodi = crea_vect_nodi(n_nodi);
 		vector<vector<int>> graph = costruisci_graph_nodi(n_nodi, vect_nodi);
 		int source = prendi_source_nodi(n_nodi, vect_nodi);
-		algoritmo(graph, source, n_nodi, vect_nodi);
+		algoritmo(graph, source, n_nodi, vect_nodi, false,vet_di_controllo);
 	}
 	
 	
